@@ -33,6 +33,7 @@
           <option value="Badminton">🏸 Badminton</option>
         </select>
         <button id="sync-btn" class="btn-sync" title="Sync with Garmin">↻</button>
+        <div id="header-avatar" class="header-avatar" title="Profile"></div>
       </div>
     </div>
   </header>
@@ -43,6 +44,29 @@
     <!-- ── Dashboard Tab ──────────────────────────────────────────────────── -->
     <section id="tab-dashboard" class="tab-content active">
       <div class="container">
+
+        <!-- Profile card -->
+        <div class="profile-card" id="profile-card">
+          <div class="profile-bg" id="profile-bg"></div>
+          <div class="profile-card-inner">
+            <div class="profile-avatar-wrap">
+              <div class="profile-avatar" id="profile-avatar"></div>
+              <label class="avatar-edit-btn" title="Change photo">
+                ✏️
+                <input type="file" id="avatar-input" accept="image/*" hidden />
+              </label>
+            </div>
+            <div class="profile-info">
+              <div class="profile-name" id="profile-name">—</div>
+              <div class="profile-location" id="profile-location"></div>
+              <div class="profile-sport-counts" id="profile-sport-counts"></div>
+            </div>
+            <label class="bg-edit-btn" title="Change background">
+              🖼
+              <input type="file" id="bg-input" accept="image/*" hidden />
+            </label>
+          </div>
+        </div>
 
         <div class="sync-bar" id="sync-bar">
           <span id="sync-status">Loading…</span>

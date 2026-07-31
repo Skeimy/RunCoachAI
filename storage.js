@@ -279,6 +279,21 @@ function getISOWeek(date) {
   return `${d.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
 }
 
+// ── Profile ───────────────────────────────────────────────────────────────────
+
+const PROFILE_FILE = path.join(DATA_DIR, 'profile.json');
+
+function getProfile() {
+  return readJSON(PROFILE_FILE, {});
+}
+
+function saveProfile(data) {
+  const current = getProfile();
+  const updated = { ...current, ...data };
+  writeJSON(PROFILE_FILE, updated);
+  return updated;
+}
+
 module.exports = {
   getActivities,
   getActivity,
@@ -292,4 +307,6 @@ module.exports = {
   getLastSync,
   setLastSync,
   buildSummary,
+  getProfile,
+  saveProfile,
 };

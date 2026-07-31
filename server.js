@@ -25,6 +25,61 @@ app.use(session({
   cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 },
 }));
 
+// ── API: Profile ──────────────────────────────────────────────────────────────
+
+const profileUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Only image files are allowed'));
+  },
+});
+
+app.get('/api/profile', async (req, res) => {
+  const saved = storage.getProfile();
+  // Merge with live Garmin profile if available
+  let garminProfile = null;
+  if (process.env.GARMIN_EMAIL && !saved.garminFetched) {
+    try {
+      garminProfile = await garmin.getProfile();
+      if (garminProfile) {
+        storage.saveProfile({
+          fullName:   garminProfile.fullName,
+          location:   garminProfile.location,
+          garminAvatarUrl: garminProfile.avatarUrl,
+          garminFetched: true,
+        });
+      }
+    } catch { /* non-fatal */ }
+  }
+  const profile = storage.getProfile();
+  res.json({ profile });
+});
+
+// Upload profile photo (stored as base64 in profile.json)
+app.post('/api/profile/avatar', profileUpload.single('avatar'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No image provided' });
+  const base64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+  const profile = storage.saveProfile({ customAvatar: base64 });
+  res.json({ profile });
+});
+
+// Upload background image
+app.post('/api/profile/background', profileUpload.single('background'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No image provided' });
+  const base64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+  const profile = storage.saveProfile({ backgroundImage: base64 });
+  res.json({ profile });
+});
+
+// Update profile name/location manually
+app.patch('/api/profile', (req, res) => {
+  const { fullName, location } = req.body;
+  const profile = storage.saveProfile({ fullName, location });
+  res.json({ profile });
+});
+
 // ── API: Status & Sync ────────────────────────────────────────────────────────
 
 app.get('/api/status', (req, res) => {

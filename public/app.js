@@ -21,12 +21,107 @@ document.addEventListener('DOMContentLoaded', () => {
   setupManualForm();
   setupObjectiveForm();
   setupChat();
+  setupProfileUploads();
   registerSW();
   loadAll();
 });
 
 async function loadAll() {
-  await Promise.all([loadStatus(), loadDashboard(), loadActivities(), loadObjectives()]);
+  await Promise.all([loadStatus(), loadProfile(), loadDashboard(), loadActivities(), loadObjectives()]);
+}
+
+// ── Profile ────────────────────────────────────────────────────────────────
+async function loadProfile() {
+  try {
+    const { profile } = await api('/api/profile');
+    renderProfile(profile);
+  } catch {
+    renderProfile({});
+  }
+}
+
+function renderProfile(p) {
+  const avatarSrc = p.customAvatar || p.garminAvatarUrl || null;
+  const name      = p.fullName || 'Athlete';
+  const location  = p.location || '';
+
+  // Header mini avatar
+  const headerAv = document.getElementById('header-avatar');
+  if (headerAv) {
+    if (avatarSrc) {
+      headerAv.style.backgroundImage = `url('${avatarSrc}')`;
+      headerAv.classList.add('has-image');
+    } else {
+      headerAv.textContent = name.charAt(0).toUpperCase();
+    }
+  }
+
+  // Profile card avatar
+  const cardAv = document.getElementById('profile-avatar');
+  if (cardAv) {
+    if (avatarSrc) {
+      cardAv.style.backgroundImage = `url('${avatarSrc}')`;
+      cardAv.classList.add('has-image');
+      cardAv.textContent = '';
+    } else {
+      cardAv.textContent = name.charAt(0).toUpperCase();
+    }
+  }
+
+  // Background image
+  const bg = document.getElementById('profile-bg');
+  if (bg && p.backgroundImage) {
+    bg.style.backgroundImage = `url('${p.backgroundImage}')`;
+    bg.classList.add('has-image');
+  }
+
+  // Name & location
+  const nameEl = document.getElementById('profile-name');
+  if (nameEl) nameEl.textContent = name;
+  const locEl = document.getElementById('profile-location');
+  if (locEl) locEl.textContent = location;
+
+  // Sport counts
+  const activities = window._allActivities || [];
+  if (activities.length > 0) renderSportCounts(activities);
+}
+
+function renderSportCounts(activities) {
+  const counts = {};
+  activities.forEach((a) => { counts[a.sport] = (counts[a.sport] || 0) + 1; });
+  const el = document.getElementById('profile-sport-counts');
+  if (!el) return;
+  el.innerHTML = Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([sport, n]) => `<span>${SPORT_ICONS[sport] || '🏅'} ${n}</span>`)
+    .join('');
+}
+
+function setupProfileUploads() {
+  // Avatar upload
+  document.getElementById('avatar-input')?.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const form = new FormData();
+    form.append('avatar', file);
+    try {
+      const { profile } = await fetch('/api/profile/avatar', { method: 'POST', body: form }).then(r => r.json());
+      renderProfile(profile);
+    } catch (err) { alert('Upload failed: ' + err.message); }
+  });
+
+  // Background upload
+  document.getElementById('bg-input')?.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const form = new FormData();
+    form.append('background', file);
+    try {
+      const { profile } = await fetch('/api/profile/background', { method: 'POST', body: form }).then(r => r.json());
+      renderProfile(profile);
+    } catch (err) { alert('Upload failed: ' + err.message); }
+  });
 }
 
 // ── Tabs ───────────────────────────────────────────────────────────────────
@@ -197,7 +292,9 @@ async function loadActivities() {
   try {
     const data = await api(`/api/activities?sport=${currentSport}&days=90`);
     allActivities = data.activities || [];
+    window._allActivities = allActivities; // cache for profile sport counts
     renderActivitiesList();
+    renderSportCounts(allActivities);
   } catch (err) {
     document.getElementById('activities-list').innerHTML = '<div class="empty"><p>Failed to load activities</p></div>';
   }

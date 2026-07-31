@@ -185,4 +185,25 @@ function formatPace(secPerKm) {
   return `${min}:${String(sec).padStart(2, '0')}`;
 }
 
-module.exports = { connect, syncActivities, startPolling, stopPolling };
+/**
+ * Fetch the athlete's profile (name, location, avatar URL) from Garmin Connect.
+ */
+async function getProfile() {
+  if (!client) await connect();
+  try {
+    const profile = await client.getUserProfile();
+    const settings = await client.getUserSettings();
+    return {
+      firstName: profile?.displayName?.split(' ')[0] || profile?.userName || '',
+      lastName:  profile?.displayName?.split(' ').slice(1).join(' ') || '',
+      fullName:  profile?.displayName || profile?.userName || 'Athlete',
+      location:  profile?.location || null,
+      avatarUrl: profile?.profileImageUrlLarge || profile?.profileImageUrlMedium || null,
+      memberSince: settings?.userData?.birthDate ? null : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+module.exports = { connect, syncActivities, startPolling, stopPolling, getProfile };

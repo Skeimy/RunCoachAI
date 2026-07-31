@@ -1,6 +1,12 @@
 const Groq = require('groq-sdk');
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+// Initialise lazily so the app doesn't crash at startup if the key
+// is not yet available (e.g. Railway injects env vars after module load)
+let _groq = null;
+function getGroq() {
+  if (!_groq) _groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+  return _groq;
+}
 
 const SPORT_LABELS = {
   Run: 'running',
@@ -45,7 +51,7 @@ async function chat(history, userMessage, summary, objectives) {
     { role: 'user', content: userMessage },
   ];
 
-  const completion = await groq.chat.completions.create({
+  const completion = await getGroq().chat.completions.create({
     model: 'llama-3.3-70b-versatile',
     messages,
     temperature: 0.7,

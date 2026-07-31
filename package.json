@@ -1,0 +1,26 @@
+{
+  "name": "runcoach-ai",
+  "version": "1.0.0",
+  "description": "Personal multi-sport dashboard with AI coach — Garmin auto-sync + Groq",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.8",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "garmin-connect": "^1.6.2",
+    "groq-sdk": "^0.3.3",
+    "fit-file-parser": "^1.9.4",
+    "multer": "^1.4.5-lts.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
